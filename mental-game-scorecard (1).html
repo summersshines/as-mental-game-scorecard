@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d3a2b">
+<title>Mental Game Scorecard</title>
+<style>
+:root{
+  --turf:#1d3a2b;
+  --mist:#edf1ec;
+  --paper:#fbfcfa;
+  --ink:#15211a;
+  --muted:#5b6a61;
+  --line:#cdd7ce;
+  --flag:#b83a2c;
+  --plan:#34566f;
+  --commit:#2c7a4d;
+  --exe:#a06a14;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--mist);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.45;
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #e0a82e;outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 14px 40px}
+
+/* header */
+header.top{background:var(--turf);color:#f2f6f1;padding:calc(14px + env(safe-area-inset-top,0)) 0 16px}
+header.top .wrap{padding-bottom:0;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.brand small{display:block;font-size:13px;color:#a9c2b2;letter-spacing:.04em}
+.brand h1{margin:2px 0 0;font-family:var(--serif);font-weight:700;font-size:26px;line-height:1.1}
+.top-btn{background:transparent;border:1.5px solid #6f917e;color:#f2f6f1;border-radius:8px;padding:9px 14px;min-height:44px}
+.top-btn:hover{background:#2a4d3b}
+
+.notice{background:#f6e3df;border:1px solid #e1b3ab;color:#7a2a20;border-radius:8px;padding:10px 12px;margin-top:12px;font-size:14px}
+
+/* round details */
+.details{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.details label{display:block;font-size:13px;color:var(--muted);margin-bottom:3px}
+.details input{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff;min-height:44px}
+.details .wide{grid-column:1 / -1}
+@media (min-width:600px){
+  .details{grid-template-columns:1.2fr 1fr 1.2fr}
+  .details .wide{grid-column:auto}
+}
+
+/* hole nav */
+.holes{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px}
+@media (min-width:640px){.holes{grid-template-columns:repeat(10,1fr)}}
+.hn{
+  background:var(--paper);border:1px solid var(--line);border-radius:10px;
+  padding:6px 0 4px;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.hn .n{font-family:var(--serif);font-size:20px;font-weight:700;line-height:1.1}
+.hn .s{font-size:12px;color:var(--muted);min-height:16px}
+.hn.has{border-color:#8fb09c}
+.hn.active{background:var(--turf);border-color:var(--turf);color:#fff}
+.hn.active .s{color:#bcd3c4}
+.hn.total .n{font-size:15px;font-family:var(--sans)}
+
+/* guide */
+details.guide{background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-top:14px}
+details.guide summary{padding:12px 14px;cursor:pointer;font-weight:600;min-height:44px}
+.guide-body{padding:0 14px 14px;display:grid;gap:12px}
+.g-pillar{border-left:5px solid var(--line);padding-left:10px}
+.g-pillar h3{margin:0 0 2px;font-size:15px}
+.g-pillar p{margin:2px 0;font-size:14px;color:#33433a}
+.g-plan{border-color:var(--plan)}.g-commit{border-color:var(--commit)}.g-exe{border-color:var(--exe)}
+.guide-note{font-size:13px;color:var(--muted);margin:0}
+
+/* hole view */
+.hole-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:22px 2px 10px}
+.hole-head h2{margin:0;font-family:var(--serif);font-size:32px}
+.hole-total{text-align:right}
+.hole-total .big{font-family:var(--serif);font-size:32px;font-weight:700}
+.hole-total .of{display:block;font-size:13px;color:var(--muted)}
+
+[data-active="1"],#add-shot{scroll-margin-top:66px}
+
+/* open shot card */
+.shot{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.shot.played{border-color:#8fb09c}
+.shot.active{border:2px solid var(--turf);padding:11px}
+.shot-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.shot-head h3{margin:0;font-size:17px}
+.shot-head-btn{
+  display:flex;width:100%;justify-content:space-between;align-items:baseline;
+  background:none;border:0;padding:0;margin:0 0 8px;text-align:left;min-height:32px;
+}
+.shot-head-btn h3{margin:0;font-size:17px}
+.shot-total{font-size:14px;color:var(--muted)}
+.shot.played .shot-total{color:var(--ink);font-weight:700}
+.hide-hint{font-weight:400;color:var(--muted);margin-left:8px;font-size:13px}
+.prow{margin-top:8px}
+.plabel{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+.plabel b{font-weight:700}
+.plabel span{color:var(--muted)}
+.chips{display:flex;gap:6px}
+.chip{
+  flex:1;min-height:46px;border:1.5px solid var(--line);background:#fff;border-radius:9px;
+  font-size:18px;font-weight:600;
+}
+.chip:active{transform:scale(.97)}
+.chip.on{color:#fff}
+.pr-plan .chip.on{background:var(--plan);border-color:var(--plan)}
+.pr-commit .chip.on{background:var(--commit);border-color:var(--commit)}
+.pr-exe .chip.on{background:var(--exe);border-color:var(--exe)}
+.pr-plan b{color:var(--plan)}.pr-commit b{color:var(--commit)}.pr-exe b{color:var(--exe)}
+
+/* folded shot row */
+.shot-row{
+  display:flex;align-items:center;gap:10px;width:100%;min-height:52px;text-align:left;
+  background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:8px;
+}
+.shot-row.complete{border-color:#8fb09c}
+.shot-row .sr-name{font-weight:600;min-width:54px}
+.shot-row .sr-badges{display:flex;gap:6px;flex:1}
+.shot-row .sr-total{font-weight:700;font-variant-numeric:tabular-nums}
+.shot-row .sr-chev{color:var(--muted);font-size:13px;width:12px;text-align:center}
+.shot-row.empty-row{background:transparent;border-style:dashed;color:var(--muted)}
+.shot-row.empty-row .sr-name{font-weight:400}
+.shot-row.empty-row .sr-total{font-weight:400;font-size:14px;flex:1;text-align:right}
+.bd{font-size:13px;font-weight:700;padding:2px 7px;border-radius:6px;background:#fff;border:1.5px solid;font-variant-numeric:tabular-nums}
+.bd.plan{color:var(--plan);border-color:var(--plan)}
+.bd.commit{color:var(--commit);border-color:var(--commit)}
+.bd.exe{color:var(--exe);border-color:var(--exe)}
+.bd.blank{color:var(--muted);border-color:var(--line);font-weight:400}
+
+.add-shot{
+  display:block;width:100%;min-height:52px;margin-top:2px;margin-bottom:10px;
+  background:transparent;border:2px dashed var(--turf);color:var(--turf);border-radius:12px;font-weight:600;
+}
+.max-note{margin:2px 2px 10px;color:var(--muted);font-size:14px}
+
+.pager{display:flex;gap:10px;margin-top:16px}
+.btn{
+  flex:1;min-height:48px;border-radius:10px;border:1.5px solid var(--turf);
+  background:var(--turf);color:#fff;font-weight:600;padding:10px 14px;
+}
+.btn.ghost{background:transparent;color:var(--turf)}
+.btn.danger{border-color:var(--flag);color:var(--flag);background:transparent}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* summary */
+.sum-title{font-family:var(--serif);font-size:32px;margin:22px 2px 4px}
+.sum-sub{margin:0 2px 14px;color:var(--muted);font-size:14px}
+.overall{background:var(--turf);color:#fff;border-radius:14px;padding:18px}
+.overall .label{font-size:14px;color:#b7cfbf}
+.overall .score{font-family:var(--serif);font-size:56px;font-weight:700;line-height:1.05}
+.overall .score small{font-size:22px;font-weight:400;color:#b7cfbf}
+.overall .line{font-size:15px;color:#d9e8de}
+.pillars{display:grid;gap:10px;margin-top:10px}
+.pill{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.pill-top{display:flex;justify-content:space-between;align-items:baseline}
+.pill-top b{font-size:16px}
+.pill-top span{font-family:var(--serif);font-size:22px;font-weight:700}
+.pill-top span small{font-size:14px;font-weight:400;color:var(--muted)}
+.bar{height:10px;background:#e3e9e4;border-radius:6px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%}
+.pill.plan .bar i{background:var(--plan)}.pill.commit .bar i{background:var(--commit)}.pill.exe .bar i{background:var(--exe)}
+.pill .pct{font-size:13px;color:var(--muted);margin-top:4px}
+.shots-played{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;display:flex;justify-content:space-between;align-items:baseline}
+.shots-played span{font-family:var(--serif);font-size:22px;font-weight:700}
+
+.tbl-wrap{overflow-x:auto;margin-top:14px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 8px;text-align:center;border-bottom:1px solid #e3e9e4}
+th{font-size:13px;color:var(--muted);font-weight:600}
+th:first-child,td:first-child{text-align:left;padding-left:12px}
+tr:last-child td{border-bottom:0}
+td.sc{font-weight:700}
+.actions{display:grid;gap:10px;margin-top:16px}
+@media (min-width:520px){.actions{grid-template-columns:1fr 1fr}.actions .full{grid-column:1 / -1}}
+.empty{background:var(--paper);border:1px dashed var(--line);border-radius:12px;padding:18px;margin-top:12px;color:var(--muted)}
+
+/* rounds list */
+.rounds-title{display:flex;justify-content:space-between;align-items:center;margin:22px 2px 10px}
+.rounds-title h2{margin:0;font-family:var(--serif);font-size:30px}
+.rounds-title .btn{flex:none}
+.round{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.round.current{border-color:var(--turf);border-width:2px}
+.round h3{margin:0;font-size:17px}
+.round p{margin:2px 0 10px;color:var(--muted);font-size:14px}
+.round-btns{display:flex;gap:8px}
+.round-btns .btn{min-height:44px}
+
+footer{text-align:center;color:var(--muted);font-size:13px;margin-top:28px}
+
+@media print{
+  header .top-btn,.holes,.pager,.actions,details.guide,.add-shot{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <small>Anthony Summers Golf</small>
+      <h1>Mental Game Scorecard</h1>
+    </div>
+    <button class="top-btn" data-act="rounds" type="button">Rounds</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="notice" class="notice" hidden>This browser is blocking saved data, so your scores will be lost when you close the page. Try a normal (not private) browser window.</div>
+
+  <section class="details" id="details">
+    <div class="wide">
+      <label for="f-player">Player</label>
+      <input id="f-player" type="text" autocomplete="off" placeholder="Player name">
+    </div>
+    <div>
+      <label for="f-date">Date</label>
+      <input id="f-date" type="date">
+    </div>
+    <div>
+      <label for="f-course">Course</label>
+      <input id="f-course" type="text" autocomplete="off" placeholder="Course name">
+    </div>
+  </section>
+
+  <nav class="holes" id="holes" aria-label="Holes"></nav>
+
+  <details class="guide" id="guide">
+    <summary>Scoring guide</summary>
+    <div class="guide-body">
+      <div class="g-pillar g-plan">
+        <h3>1. Plan, max 3</h3>
+        <p><b>Info gathering (1):</b> Assess wind, lie, hazard zones and the situation.</p>
+        <p><b>Decision (2):</b> A clear choice based on present capabilities.</p>
+      </div>
+      <div class="g-pillar g-commit">
+        <h3>2. Commit, max 4</h3>
+        <p><b>See visuals (1):</b> A crystal clear flight image.</p>
+        <p><b>Feel shot (1):</b> Immersion in tempo and contact.</p>
+        <p><b>Full commitment (2):</b> 100% conviction over the ball.</p>
+      </div>
+      <div class="g-pillar g-exe">
+        <h3>3. Execute and release, max 3</h3>
+        <p><b>Free execution (1):</b> Swing freely at the target.</p>
+        <p><b>Post-shot release (2):</b> Gain confidence, or learn and leave it in the past.</p>
+      </div>
+      <p class="guide-note">Maximum score per shot is 10 points. Tap a score to set it, tap it again to clear it. When all three pillars are scored the shot folds up and the next shot opens. Tap a folded shot to reopen it.</p>
+    </div>
+  </details>
+
+  <main id="main"></main>
+
+  <footer>Focus on process over outcome</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Settings ---------- */
+  var HOLES = 9;
+  var START_SHOTS = 6;
+  var MAX_SHOTS = 10;
+  var PILLARS = [
+    { key: 'pln', cls: 'plan',   letter: 'P', name: 'Plan',    max: 3 },
+    { key: 'cmt', cls: 'commit', letter: 'C', name: 'Commit',  max: 4 },
+    { key: 'exe', cls: 'exe',    letter: 'E', name: 'Execute', max: 3 }
+  ];
+
+  /* ---------- Storage (all saving goes through here, so Supabase can replace it later) ---------- */
+  var KEY = 'as-mental-scorecard-v1';
+  var db = { rounds: {}, currentId: null, lastPlayer: '', lastView: 0 };
+  var storageOk = true;
+
+  function loadAll() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.rounds) {
+          db.rounds = parsed.rounds;
+          db.currentId = parsed.currentId || null;
+          db.lastPlayer = parsed.lastPlayer || '';
+          db.lastView = parsed.lastView === undefined ? 0 : parsed.lastView;
+        }
+      }
+    } catch (e) { storageOk = false; }
+    showNotice();
+  }
+
+  // Writes everything to the browser's storage. Does not change the "last edited" time.
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(db)); }
+    catch (e) { storageOk = false; }
+    showNotice();
+  }
+
+  // Use after any score or detail changes.
+  function saveAll() {
+    var r = cur();
+    if (r) r.updatedAt = new Date().toISOString();
+    persist();
+  }
+
+  function showNotice() {
+    document.getElementById('notice').hidden = storageOk;
+  }
+
+  /* ---------- Rounds ---------- */
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function todayStr() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+
+  function blankShot() { return { pln: null, cmt: null, exe: null }; }
+
+  function blankRound() {
+    var holes = [];
+    for (var h = 0; h < HOLES; h++) {
+      var shots = [];
+      for (var s = 0; s < START_SHOTS; s++) shots.push(blankShot());
+      holes.push(shots);
+    }
+    var now = new Date().toISOString();
+    return { id: uid(), player: db.lastPlayer || '', date: todayStr(), course: '', holes: holes, createdAt: now, updatedAt: now };
+  }
+
+  function cur() { return db.rounds[db.currentId]; }
+
+  function startNewRound() {
+    var r = cur();
+    if (r && roundStats(r).shots === 0) delete db.rounds[r.id]; // don't pile up empty rounds
+    var n = blankRound();
+    db.rounds[n.id] = n;
+    db.currentId = n.id;
+    saveAll();
+    fillDetails();
+    setView(0);
+  }
+
+  /* ---------- Maths ---------- */
+  function played(s) { return s.pln !== null || s.cmt !== null || s.exe !== null; }
+  function complete(s) { return s.pln !== null && s.cmt !== null && s.exe !== null; }
+  function shotTotal(s) { return (s.pln || 0) + (s.cmt || 0) + (s.exe || 0); }
+
+  // The shot being scored now: the first one that is not fully scored. -1 means all are done.
+  function activeIndex(shots) {
+    for (var i = 0; i < shots.length; i++) if (!complete(shots[i])) return i;
+    return -1;
+  }
+
+  function holeStats(shots) {
+    var o = { shots: 0, pln: 0, cmt: 0, exe: 0, total: 0 };
+    shots.forEach(function (s) {
+      if (!played(s)) return;
+      o.shots++;
+      o.pln += s.pln || 0;
+      o.cmt += s.cmt || 0;
+      o.exe += s.exe || 0;
+      o.total += shotTotal(s);
+    });
+    return o;
+  }
+
+  function roundStats(r) {
+    var t = { shots: 0, pln: 0, cmt: 0, exe: 0, total: 0 };
+    r.holes.forEach(function (h) {
+      var s = holeStats(h);
+      t.shots += s.shots; t.pln += s.pln; t.cmt += s.cmt; t.exe += s.exe; t.total += s.total;
+    });
+    return t;
+  }
+
+  /* ---------- Helpers ---------- */
+  function esc(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function pct(n, d) { return d ? Math.round((n / d) * 100) : 0; }
+  function avg(n, d) { return d ? (n / d).toFixed(1) : '-'; }
+  function fmtDate(str) {
+    if (!str) return 'No date';
+    var d = new Date(str + 'T00:00:00');
+    if (isNaN(d)) return str;
+    return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function slug(str) {
+    return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+
+  /* ---------- View state ---------- */
+  var view = 0;      // 0..8 = hole, 'summary', 'rounds'
+  var openSet = {};  // shots the person has opened by hand, e.g. { '0-2': true }
+
+  function setView(v) {
+    view = v;
+    openSet = {};
+    if (v !== 'rounds') { db.lastView = v; persist(); }
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  function scrollToActive(smooth) {
+    var el = document.querySelector('[data-active="1"]') || document.getElementById('add-shot');
+    if (!el) return false;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ behavior: (smooth && !reduce) ? 'smooth' : 'auto', block: 'start' });
+    return true;
+  }
+
+  /* ---------- Rendering ---------- */
+  function render() {
+    var r = cur();
+    var isRounds = view === 'rounds';
+    document.getElementById('details').hidden = isRounds;
+    document.getElementById('holes').hidden = isRounds;
+    document.getElementById('guide').hidden = typeof view !== 'number';
+
+    renderNav(r);
+
+    var main = document.getElementById('main');
+    if (isRounds) main.innerHTML = roundsHTML();
+    else if (view === 'summary') main.innerHTML = summaryHTML(r);
+    else main.innerHTML = holeHTML(r, view);
+  }
+
+  function renderNav(r) {
+    var html = '';
+    for (var i = 0; i < HOLES; i++) {
+      var st = holeStats(r.holes[i]);
+      var cls = 'hn' + (view === i ? ' active' : '') + (st.shots ? ' has' : '');
+      html += '<button type="button" class="' + cls + '" data-act="go" data-go="' + i + '" aria-label="Hole ' + (i + 1) + '">' +
+        '<span class="n">' + (i + 1) + '</span><span class="s">' + (st.shots ? st.total : '') + '</span></button>';
+    }
+    var tot = roundStats(r);
+    html += '<button type="button" class="hn total' + (view === 'summary' ? ' active' : '') + (tot.shots ? ' has' : '') +
+      '" data-act="go" data-go="summary"><span class="n">Total</span><span class="s">' + (tot.shots ? tot.total : '') + '</span></button>';
+    document.getElementById('holes').innerHTML = html;
+  }
+
+  function chipsHTML(h, si, s) {
+    var html = '';
+    PILLARS.forEach(function (p) {
+      html += '<div class="prow pr-' + p.cls + '">' +
+        '<div class="plabel"><b>' + p.name + '</b><span>out of ' + p.max + '</span></div>' +
+        '<div class="chips">';
+      for (var v = 0; v <= p.max; v++) {
+        var on = s[p.key] === v;
+        html += '<button type="button" class="chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" ' +
+          'aria-label="' + p.name + ' ' + v + '" data-act="chip" data-h="' + h + '" data-s="' + si + '" data-p="' + p.key + '" data-v="' + v + '">' + v + '</button>';
+      }
+      html += '</div></div>';
+    });
+    return html;
+  }
+
+  function foldedHTML(h, si, s) {
+    var key = h + '-' + si;
+    if (!played(s)) {
+      return '<button type="button" class="shot-row empty-row" data-act="toggle" data-key="' + key + '" aria-expanded="false">' +
+        '<span class="sr-name">Shot ' + (si + 1) + '</span><span class="sr-total">Not scored yet</span><span class="sr-chev" aria-hidden="true">&#9662;</span></button>';
+    }
+    var badges = PILLARS.map(function (p) {
+      var v = s[p.key];
+      return '<span class="bd ' + (v === null ? 'blank' : p.cls) + '">' + p.letter + (v === null ? '-' : v) + '</span>';
+    }).join('');
+    return '<button type="button" class="shot-row' + (complete(s) ? ' complete' : '') + '" data-act="toggle" data-key="' + key + '" aria-expanded="false">' +
+      '<span class="sr-name">Shot ' + (si + 1) + '</span><span class="sr-badges">' + badges + '</span>' +
+      '<span class="sr-total">' + shotTotal(s) + '/10</span><span class="sr-chev" aria-hidden="true">&#9662;</span></button>';
+  }
+
+  function openShotHTML(h, si, s, isActive) {
+    var key = h + '-' + si;
+    var isPlayed = played(s);
+    var totalTxt = isPlayed ? shotTotal(s) + ' / 10' : 'Not scored';
+    var head;
+    if (isActive) {
+      head = '<div class="shot-head"><h3>Shot ' + (si + 1) + '</h3><span class="shot-total">' + totalTxt + '</span></div>';
+    } else {
+      head = '<button type="button" class="shot-head-btn" data-act="toggle" data-key="' + key + '" aria-expanded="true">' +
+        '<h3>Shot ' + (si + 1) + '</h3><span class="shot-total">' + totalTxt + '<span class="hide-hint">Fold up</span></span></button>';
+    }
+    return '<article class="shot' + (isPlayed ? ' played' : '') + (isActive ? ' active' : '') + '"' + (isActive ? ' data-active="1"' : '') + '>' +
+      head + chipsHTML(h, si, s) + '</article>';
+  }
+
+  function holeHTML(r, h) {
+    var shots = r.holes[h];
+    var st = holeStats(shots);
+    var act = activeIndex(shots);
+    var html = '<section class="hole-head"><h2>Hole ' + (h + 1) + '</h2>' +
+      '<div class="hole-total"><span class="big">' + st.total + '</span>' +
+      '<span class="of">' + (st.shots ? 'points over ' + st.shots + (st.shots === 1 ? ' shot' : ' shots') : 'no shots scored') + '</span></div></section>';
+
+    shots.forEach(function (s, si) {
+      var isActive = si === act;
+      var isOpen = isActive || !!openSet[h + '-' + si];
+      html += isOpen ? openShotHTML(h, si, s, isActive) : foldedHTML(h, si, s);
+    });
+
+    var last = shots[shots.length - 1];
+    if (complete(last)) {
+      if (shots.length < MAX_SHOTS) {
+        html += '<button type="button" class="add-shot" id="add-shot" data-act="add" data-h="' + h + '">Add shot ' + (shots.length + 1) + '</button>';
+      } else {
+        html += '<p class="max-note">' + MAX_SHOTS + ' shots is the most a hole can hold.</p>';
+      }
+    }
+
+    html += '<div class="pager">' +
+      '<button type="button" class="btn ghost" data-act="go" data-go="' + (h - 1) + '"' + (h === 0 ? ' disabled' : '') + '>Previous hole</button>' +
+      '<button type="button" class="btn" data-act="go" data-go="' + (h === HOLES - 1 ? 'summary' : h + 1) + '">' +
+      (h === HOLES - 1 ? 'View summary' : 'Next hole') + '</button></div>';
+    return html;
+  }
+
+  function summaryHTML(r) {
+    var t = roundStats(r);
+    var title = '<h2 class="sum-title">Round summary</h2>' +
+      '<p class="sum-sub">' + esc(r.player || 'No player name') + ', ' + esc(r.course || 'no course') + ', ' + esc(fmtDate(r.date)) + '</p>';
+
+    if (!t.shots) {
+      return title + '<div class="empty">No shots scored yet. Go to a hole and tap a score for Plan, Commit or Execute. Your summary builds as you score.</div>' +
+        '<div class="actions"><button type="button" class="btn full" data-act="go" data-go="0">Start scoring at hole 1</button></div>';
+    }
+
+    var max = t.shots * 10;
+    var html = title +
+      '<section class="overall"><div class="label">Overall mental score</div>' +
+      '<div class="score">' + t.total + ' <small>/ ' + max + '</small></div>' +
+      '<div class="line">' + pct(t.total, max) + '% of the points available, ' + avg(t.total, t.shots) + ' per shot out of 10</div></section>';
+
+    html += '<div class="shots-played"><div>Total shots played</div><span>' + t.shots + '</span></div>';
+
+    html += '<div class="pillars">';
+    PILLARS.forEach(function (p) {
+      var sum = t[p.key];
+      var m = t.shots * p.max;
+      html += '<div class="pill ' + p.cls + '"><div class="pill-top"><b>' + p.name + ' score</b>' +
+        '<span>' + sum + ' <small>/ ' + m + '</small></span></div>' +
+        '<div class="bar"><i style="width:' + pct(sum, m) + '%"></i></div>' +
+        '<div class="pct">' + pct(sum, m) + '%, ' + avg(sum, t.shots) + ' per shot out of ' + p.max + '</div></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="tbl-wrap"><table><thead><tr><th>Hole</th><th>Shots</th><th>Plan</th><th>Commit</th><th>Execute</th><th>Total</th><th>Avg</th></tr></thead><tbody>';
+    r.holes.forEach(function (h, i) {
+      var s = holeStats(h);
+      var dash = function (v) { return s.shots ? v : '-'; };
+      html += '<tr><td>Hole ' + (i + 1) + '</td><td>' + dash(s.shots) + '</td><td>' + dash(s.pln) + '</td><td>' + dash(s.cmt) +
+        '</td><td>' + dash(s.exe) + '</td><td class="sc">' + dash(s.total) + '</td><td>' + (s.shots ? avg(s.total, s.shots) : '-') + '</td></tr>';
+    });
+    html += '<tr><td><b>Round</b></td><td><b>' + t.shots + '</b></td><td><b>' + t.pln + '</b></td><td><b>' + t.cmt + '</b></td><td><b>' + t.exe +
+      '</b></td><td class="sc">' + t.total + '</td><td><b>' + avg(t.total, t.shots) + '</b></td></tr>';
+    html += '</tbody></table></div>';
+
+    html += '<div class="actions">' +
+      '<button type="button" class="btn ghost" data-act="csv">Download CSV</button>' +
+      '<button type="button" class="btn ghost" data-act="json">Download JSON backup</button>' +
+      '<button type="button" class="btn full" data-act="new">Start a new round</button></div>';
+    return html;
+  }
+
+  function roundsHTML() {
+    var list = Object.keys(db.rounds).map(function (k) { return db.rounds[k]; });
+    list.sort(function (a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
+
+    var html = '<div class="rounds-title"><h2>Rounds</h2><button type="button" class="btn" data-act="new">New round</button></div>';
+    if (!list.length) return html + '<div class="empty">No saved rounds yet.</div>';
+
+    list.forEach(function (r) {
+      var t = roundStats(r);
+      var isCur = r.id === db.currentId;
+      html += '<div class="round' + (isCur ? ' current' : '') + '"><h3>' + esc(r.player || 'No player name') + '</h3>' +
+        '<p>' + esc(r.course || 'No course') + ', ' + esc(fmtDate(r.date)) + '<br>' +
+        (t.shots ? t.shots + ' shots, mental score ' + t.total + ' / ' + (t.shots * 10) + ' (' + pct(t.total, t.shots * 10) + '%)' : 'No shots scored') +
+        '</p><div class="round-btns">' +
+        '<button type="button" class="btn" data-act="open" data-id="' + esc(r.id) + '">' + (isCur ? 'Back to this round' : 'Open') + '</button>' +
+        '<button type="button" class="btn danger" data-act="del" data-id="' + esc(r.id) + '">Delete</button></div></div>';
+    });
+    return html;
+  }
+
+  /* ---------- Exports ---------- */
+  function download(filename, text, mime) {
+    var blob = new Blob([text], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function csvCell(v) {
+    var s = String(v == null ? '' : v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  function exportCSV() {
+    var r = cur();
+    var rows = [['round_id', 'player', 'date', 'course', 'hole', 'shot', 'plan', 'commit', 'execute', 'total']];
+    r.holes.forEach(function (h, hi) {
+      h.forEach(function (s, si) {
+        if (!played(s)) return;
+        rows.push([r.id, r.player, r.date, r.course, hi + 1, si + 1, s.pln, s.cmt, s.exe, shotTotal(s)]);
+      });
+    });
+    var text = rows.map(function (row) { return row.map(csvCell).join(','); }).join('\n');
+    download('mental-scorecard-' + (slug(r.player) || 'player') + '-' + (r.date || 'round') + '.csv', text, 'text/csv');
+  }
+
+  function exportJSON() {
+    var r = cur();
+    download('mental-scorecard-' + (slug(r.player) || 'player') + '-' + (r.date || 'round') + '.json', JSON.stringify(r, null, 2), 'application/json');
+  }
+
+  /* ---------- Round details inputs ---------- */
+  function fillDetails() {
+    var r = cur();
+    document.getElementById('f-player').value = r.player || '';
+    document.getElementById('f-date').value = r.date || '';
+    document.getElementById('f-course').value = r.course || '';
+  }
+
+  function bindDetails() {
+    document.getElementById('f-player').addEventListener('input', function (e) {
+      var r = cur(); r.player = e.target.value; db.lastPlayer = e.target.value; saveAll();
+    });
+    document.getElementById('f-date').addEventListener('input', function (e) {
+      cur().date = e.target.value; saveAll();
+    });
+    document.getElementById('f-course').addEventListener('input', function (e) {
+      cur().course = e.target.value; saveAll();
+    });
+  }
+
+  /* ---------- Clicks ---------- */
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]');
+    if (!el || el.disabled) return;
+    var act = el.getAttribute('data-act');
+
+    if (act === 'chip') {
+      var h = +el.getAttribute('data-h'), s = +el.getAttribute('data-s');
+      var p = el.getAttribute('data-p'), v = +el.getAttribute('data-v');
+      var shots = cur().holes[h];
+      var before = activeIndex(shots);
+      shots[s][p] = shots[s][p] === v ? null : v; // tap again to clear
+      saveAll();
+      var after = activeIndex(shots);
+      var y = window.scrollY;
+      render();
+      // If the active shot changed, bring the new one into view. Otherwise stay put.
+      if (after === before || !scrollToActive(true)) window.scrollTo(0, y);
+    } else if (act === 'toggle') {
+      var key = el.getAttribute('data-key');
+      if (openSet[key]) delete openSet[key]; else openSet[key] = true;
+      var y2 = window.scrollY;
+      render();
+      window.scrollTo(0, y2);
+    } else if (act === 'add') {
+      var hh = +el.getAttribute('data-h');
+      var list = cur().holes[hh];
+      if (list.length < MAX_SHOTS) list.push(blankShot());
+      saveAll();
+      render();
+      scrollToActive(true);
+    } else if (act === 'go') {
+      var g = el.getAttribute('data-go');
+      setView(g === 'summary' ? 'summary' : +g);
+    } else if (act === 'rounds') {
+      setView('rounds');
+    } else if (act === 'new') {
+      startNewRound();
+    } else if (act === 'open') {
+      db.currentId = el.getAttribute('data-id');
+      saveAll(); fillDetails(); setView(0);
+    } else if (act === 'del') {
+      var id = el.getAttribute('data-id');
+      if (!confirm('Delete this round? This cannot be undone.')) return;
+      delete db.rounds[id];
+      if (db.currentId === id) {
+        var ids = Object.keys(db.rounds);
+        if (ids.length) db.currentId = ids[0];
+        else { var n = blankRound(); db.rounds[n.id] = n; db.currentId = n.id; }
+        fillDetails();
+      }
+      saveAll(); render();
+    } else if (act === 'csv') {
+      exportCSV();
+    } else if (act === 'json') {
+      exportJSON();
+    }
+  });
+
+  /* ---------- Extra safety: save again when the page is hidden or closed ---------- */
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') persist();
+  });
+  window.addEventListener('pagehide', persist);
+
+  /* ---------- Start ---------- */
+  loadAll();
+  if (!cur()) {
+    var first = blankRound();
+    db.rounds[first.id] = first;
+    db.currentId = first.id;
+    saveAll();
+  }
+  try {
+    // Ask the browser not to clear this data when it is short on space (it may ignore this).
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+  } catch (e) { /* ignore */ }
+
+  var lv = db.lastView;
+  view = ((typeof lv === 'number' && lv >= 0 && lv < HOLES) || lv === 'summary') ? lv : 0;
+  fillDetails();
+  bindDetails();
+  render();
+  // Reopening mid-hole: jump straight to the shot that is waiting to be scored.
+  if (typeof view === 'number') {
+    var a = activeIndex(cur().holes[view]);
+    if (a > 0) scrollToActive(false);
+  }
+})();
+</script>
+</body>
+</html>
